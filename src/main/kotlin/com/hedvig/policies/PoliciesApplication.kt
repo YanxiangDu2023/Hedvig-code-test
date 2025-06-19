@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class PoliciesApplication
 
 fun main(args: Array<String>) {
-	runApplication<PoliciesApplication>(*args)
+    runApplication<PoliciesApplication>(*args)
 }
