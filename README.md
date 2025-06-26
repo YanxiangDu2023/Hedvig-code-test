@@ -67,8 +67,4 @@ Feel free to add tests for your system, and write them in the way you feel bring
 
 ## Submitting your solution
 
-Zip the entire project folder.
-
-Name the zip file with your full name (e.g., hedvig-policy-manager-jane-doe.zip).
-
-Send the zip file to your hiring contact via email or through the channel you received the assignment from.
+Create a private repository on GitHub and invite the reviewers from Hedvig provided by your hiring contact.
