@@ -1,70 +1,183 @@
-# Hedvig Policy Manager
+# Hedvig Insurance Code Test
 
-You are to build a very basic [insurance policy system](https://en.wikipedia.org/wiki/Insurance_policy), which holds
-insurance contracts signed between an insurance provider (Hedvig) and a policyholder (end-users).
-For simplicity, we will also be dealing with a stripped-down version of home insurance.
+A simplified insurance policy management service built with **Spring Boot** and **Kotlin**. It exposes REST endpoints to create/update policies and query premiums. Database schema is managed by **Liquibase** and runs on **H2**.
 
-Since this is a code test, we skip important bits such as authentication and user management, and instead will focus
-entirely on designing of the APIs and data model of the insurance policies.
+---
 
-If you feel anything is unclear or underspecified, make assumptions and explain your thinking during the interview.
+## Features
 
-### Use of AI
+* **Insurance & Policy**: one `Insurance` (per `personalNumber`) can have many `Policy` rows.
+* **Premium calculation**: derived from postal code prefix.
+* **Read/Write separation**: command service for mutations, query service for reads.
+* **Migrations**: Liquibase SQL changelog.
+* **Tests**: JUnit 5 + Mockito + MockMvc.
 
-You are free to use AI during the assignment, especially to research and learn tools you might not yet be familiar with.
+---
 
-## Getting started
+## Tech Stack
 
-This repo is already set up as a launchable Spring Boot application with enough dependencies to build HTTP endpoints.
-The maven `pom.xml` file contains three suggestions for database libraries, where you get to choose the one you are
-most comfortable with (or excited to try).
+* Kotlin, Spring Boot
+* Spring Web, Spring Data JPA
+* H2 (in‑memory), Liquibase
+* Maven, JUnit 5, Mockito, MockMvc
 
-## Requirements
+---
 
-### Data model
+## Project Structure
 
-To create a valid insurance `Policy`, the following data points need to be collected:
+```
+src
+├─ main
+│  ├─ kotlin/com.hedvig.policies
+│  │  ├─ controller/            # REST controllers
+│  │  ├─ dto/                   # request/response DTOs
+│  │  ├─ model/                 # JPA entities (Insurance, Policy)
+│  │  ├─ repository/            # Spring Data repositories
+│  │  └─ service/               # command/query services + PremiumCalculator
+│  └─ resources
+│     ├─ db.changelog/migrations/1-initial-migration.sql
+│     └─ application.properties
+└─ test/kotlin/com.hedvig.policies
+   ├─ Controller/               # MockMvc tests
+   └─ Service/                  # Unit tests
+```
 
-* `personalNumber (string)` - the personal identity number of the policyholder 
-* `address (string)` - the street address of the home, like "Kungsgatan 16" 
-* `postalCode (string)` - the postal code of the home, like "11135"
-* `startDate (date)` - the day this policy begins
+---
 
-The system should then calculate a monthly `premium` associated with the policy. You can choose whichever premium
-calculation strategy you wish — the sky is the limit!
+## Run the app
 
-#### Insurance timeline
+```bash
+./mvnw spring-boot:run
+```
 
-Typically, insurances can be updated by the policyholder with a new `startDate` and updated information — creating
-a timeline of multiple back-to-back policies. You can think of this timeline as one `Insurance`, which holds multiple
-`Policy` entries.
+The app starts on **[http://localhost:8080](http://localhost:8080)**.
 
-You can assume that `personalNumber` never changes between policies inside a single insurance.
+### Test the API (Swagger UI)
 
-### Starting an insurance
+Open **[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)** and try the endpoints interactively.
 
-There should be an endpoint where insurances can be started by providing enough information to create a first policy.
+### Inspect the database (H2 Console)
 
-### Changing your insurance
+Open **[http://localhost:8080/h2-console/](http://localhost:8080/h2-console/)** and use:
 
-Policyholders typically need to change their insurance sometimes. For instance, if they decide to move from one
-home to another at a given date. This should effectively put an end date on their existing policy and start a new one.
+* **JDBC URL**: `jdbc:h2:mem:testdb`
+* **User Name**: `sa`
+* **Password**: *(leave empty)*
 
-This endpoint should target a single insurance and create a new policy within it.
+Example queries:
 
-### Reading insurance and policies
+```sql
+SELECT * FROM INSURANCE;
+SELECT * FROM POLICY ORDER BY INSURANCE_ID, START_DATE;
+```
 
-There should be ways of reading policies back from the system. Here are some typical use cases for how one typically
-queries the insurances:
+---
 
-* List all `Insurances` for a given `personalNumber`
-* List all `Policies` for a given `personalNumber` on a specific `date`
-* For a given `Insurance`, show its policy on a specific `date`
+## API Endpoints
 
-## Testing
+### Create insurance
 
-Feel free to add tests for your system, and write them in the way you feel brings the most value.
+```
+POST /insurances
+Content-Type: application/json
+```
 
-## Submitting your solution
+Request body:
 
-Create a private repository on GitHub and invite the reviewers from Hedvig provided by your hiring contact.
+```json
+{
+  "personalNumber": "19900101-1234",
+  "address": "Kungsgatan 16",
+  "postalCode": "11135",
+  "startDate": "2025-01-01"
+}
+```
+
+### Update / add policy to an insurance
+
+```
+POST /insurances/{insuranceId}/policies
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "address": "Drottninggatan 22",
+  "postalCode": "11151",
+  "startDate": "2025-06-01"
+}
+```
+
+### List insurances by personal number
+
+```
+GET /insurances?personalNumber=19900101-1234
+```
+
+### List policies active on a given date for a personal number
+
+```
+GET /insurances/policies?personalNumber=19900101-1234&date=2025-03-01
+```
+
+### Get the policy active at a date for a specific insurance
+
+```
+GET /insurances/{insuranceId}/policy-at?date=2025-03-01
+```
+
+### Get current policies (or at a specific date)
+
+```
+GET /insurances/current?personalNumber=19900101-1234[&date=2025-03-01]
+```
+
+Response is a list of `CurrentPolicyDto` with the active policy per insurance.
+
+### Get total premium over a date range
+
+```
+GET /insurances/premium/total?personalNumber=19900101-1234&from=2025-01-01&to=2025-06-30
+```
+
+Returns `PremiumTotalDto` with the summed monthly premium across overlapping months.
+
+---
+
+## Database Schema
+
+**insurance**
+
+* `id` (PK)
+* `personal_number` (UNIQUE)
+
+**policy**
+
+* `id` (PK)
+* `insurance_id` (FK → insurance.id)
+* `address`
+* `postal_code`
+* `start_date`
+* `end_date` (nullable)
+* `premium`
+
+Liquibase runs automatically on startup and creates these tables.
+
+---
+
+## Run tests
+
+```bash
+./mvnw test
+```
+
+Covers premium calculation, service logic (create/update), and controller endpoints.
+
+---
+
+## Notes
+
+* Premium rule (example): postal codes starting with `11` → 100.00; otherwise 150.00.
+* H2 is in-memory by default; restart resets data. Use the H2 console for quick inspection.
