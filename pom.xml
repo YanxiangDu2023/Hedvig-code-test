@@ -28,6 +28,9 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+
+
+
 			<dependency>
 				<groupId>org.jetbrains.exposed</groupId>
 				<artifactId>exposed-bom</artifactId>
@@ -55,9 +58,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+			<version>4.0.0-M1</version>
 		</dependency>
-
 		<dependency>
+
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
@@ -67,7 +71,32 @@
 			<artifactId>liquibase-core</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+
+
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+
 		<!--
+
 		Choose your persistence technology!
 		- Remove comments from one of these to get started with your preferred SQL database technology.
 		- Some of them might need extra dependencies to use certain Database features, such as storing JSON.

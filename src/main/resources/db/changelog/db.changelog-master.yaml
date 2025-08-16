@@ -1,4 +1,9 @@
+#databaseChangeLog:
+#  - logicalFilePath: changelog.xml
+#  - includeAll:
+#      path: classpath:db/changelog/migrations
+
 databaseChangeLog:
-  - logicalFilePath: changelog.xml
+  - logicalFilePath: db.changelog-master.yaml
   - includeAll:
       path: classpath:db/changelog/migrations
